@@ -1,0 +1,491 @@
+@startuml
+
+actor User
+
+participant View as "<<View>>\n DisplayedOrdersPage"
+
+Note over View: This page is a representation of all the alts int the ref of ViewOrders
+
+participant viewOrdersDetailsAdmin as "<<View>>\nviewOrdersDetailsAdmin"
+
+participant viewOrdersDetailsCustomers as "<<View>>\nviewOrdersDetailsCustomers"
+
+participant AcceptOrderRequest as "acceptOrderRequest: AcceptOrderRequest"
+
+
+participant DeclineOrderRequest as "declineOrderRequest: DeclineOrderRequest"
+
+participant CancelOrderRequest as "cancelOrderRequest: CancelOrderRequest"
+
+participant CustomerController as "<<Controller>>\nCustomerController"
+
+participant OrderController as "<<Controller>>\nOrderController"
+
+participant Admins as "admins: List<UserInfoReponse>"
+
+participant Auth0ManagementService as "<<Service>>\nAuth0ManagementService"
+
+participant EmailService as "EmailService"
+
+participant OrderService as "<<Service>>\nOrderService"
+
+participant allResponse as "orderResponse: OrderResponse"
+
+participant OrderRepository as "<<Repository>>\nOrderRepository"
+
+participant allOrders as "order: Order"
+
+participant Order as "order: Order"
+
+participant Response as "response: OrderResponse"
+
+participant Database as "<<Database>>\nDatabase"
+
+participant OrderResponseMapper as "<<Mapper>>\nOrderResponseMapper"
+
+
+ref over View,OrderController, OrderService, OrderRepository, Database, OrderResponseMapper
+    ViewOrders
+
+
+end ref
+
+opt
+alt User is Admin
+User -> View: viewSpecificOrder(orderId: String)
+activate View
+
+View -> viewOrdersDetailsAdmin: render()
+activate viewOrdersDetailsAdmin
+viewOrdersDetailsAdmin -> OrderController: GET /api/v1/corso/orders/{orderId}
+
+activate OrderController
+
+OrderController -> OrderService: viewSpecificOrder(orderId: String)
+
+activate OrderService
+
+OrderService -> OrderRepository: viewSpecificOrder(orderId: String)
+
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = orderId
+
+activate Database
+
+Database --> allOrders: allOrders: List<Order>
+deactivate Database
+
+activate allOrders
+
+allOrders -> OrderRepository: allOrders: List<Order>
+
+OrderRepository --> OrderService: allOrders: List<Order>
+
+deactivate OrderRepository
+
+OrderService -> OrderResponseMapper: allOrders: List<Order>
+
+activate OrderResponseMapper
+
+OrderResponseMapper --> allResponse: allResponse: List<OrderResponse>
+activate allResponse
+deactivate OrderResponseMapper
+
+deactivate allOrders
+
+allResponse -> OrderService
+
+OrderService --> OrderController: allResponse: List<OrderResponse>
+
+deactivate OrderService
+
+OrderController --> viewOrdersDetailsAdmin: allResponse: List<OrderResponse>
+
+deactivate View
+
+deactivate allResponse
+
+
+alt if order status is pending
+
+
+
+opt
+
+User -> viewOrdersDetailsAdmin: updateOrderStatusToAccepted()
+activate viewOrdersDetailsAdmin
+
+viewOrdersDetailsAdmin -> AcceptOrderRequest: PATCH /api/v1/corso/orders/manage/acceptOrder/{orderId}
+activate AcceptOrderRequest
+
+AcceptOrderRequest -> OrderController
+activate OrderController
+
+OrderController -> OrderService: updateOrderStatusToAccepted(String orderId, AcceptOrderRequest acceptOrderRequest)
+activate OrderService
+
+OrderService -> OrderRepository: findByOrderId_OrderId(orderId)
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = ?
+activate Database
+Database --> Order: order: Order
+deactivate Database
+activate Order
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService -> EmailService: sendEmail(acceptOrderRequest.getRecipient(), String, String, Map<String, String>)
+activate EmailService
+deactivate EmailService
+deactivate AcceptOrderRequest
+
+OrderService -> OrderRepository: save(order: Order)
+deactivate Order
+activate OrderRepository
+
+OrderRepository -> Database: UPDATE INTO orders (order_id, user_id, status, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+activate Database
+
+Database --> Order
+activate Order
+deactivate Database
+
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService --> OrderResponseMapper: map(order: Order)
+activate OrderResponseMapper
+
+OrderResponseMapper --> Response: response: OrderResponse
+deactivate Order
+deactivate OrderResponseMapper
+activate Response
+
+OrderService <-- Response: response: OrderResponse
+OrderService --> OrderController: response: OrderResponse
+OrderController --> viewOrdersDetailsAdmin: response: OrderResponse
+
+deactivate Response
+
+
+
+end opt
+
+
+
+opt
+
+
+
+User -> viewOrdersDetailsAdmin: updateOrderStatusToDeclined()
+
+viewOrdersDetailsAdmin -> DeclineOrderRequest: PATCH /api/v1/corso/orders/manage/declineOrder/{orderId}
+activate DeclineOrderRequest
+
+DeclineOrderRequest -> OrderController
+
+OrderController -> OrderService: updateOrderStatusToDeclined(String orderId, DeclineOrderRequest declineOrderRequest)
+activate OrderService
+
+OrderService -> OrderRepository: findByOrderId_OrderId(orderId)
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = ?
+activate Database
+Database --> Order: order: Order
+deactivate Database
+activate Order
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService -> EmailService: sendEmail(declineOrderRequest.getRecipient(), String, String, Map<String, String>)
+activate EmailService
+deactivate EmailService
+deactivate DeclineOrderRequest
+
+OrderService -> OrderRepository: save(order: Order)
+deactivate Order
+activate OrderRepository
+
+OrderRepository -> Database: UPDATE INTO orders (order_id, user_id, status, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+activate Database
+
+Database --> Order
+activate Order
+deactivate Database
+
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService --> OrderResponseMapper: map(order: Order)
+activate OrderResponseMapper
+
+OrderResponseMapper --> Response: response: OrderResponse
+deactivate Order
+deactivate OrderResponseMapper
+activate Response
+
+OrderService <-- Response: response: OrderResponse
+OrderService --> OrderController: response: OrderResponse
+OrderController --> viewOrdersDetailsAdmin: response: OrderResponse
+
+deactivate Response
+
+
+end opt
+
+
+
+
+
+else if order status is in progress || order status is overdue
+
+
+opt
+
+
+User -> viewOrdersDetailsAdmin: updateOrderStatusToCancelled()
+
+viewOrdersDetailsAdmin -> DeclineOrderRequest: PATCH /api/v1/corso/orders/manage/cancelOrder/{orderId}
+activate DeclineOrderRequest
+
+DeclineOrderRequest -> OrderController
+
+OrderController -> OrderService: updateOrderStatusToCancelled(String orderId, DeclineOrderRequest declineOrderRequest)
+activate OrderService
+
+OrderService -> OrderRepository: findByOrderId_OrderId(orderId)
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = ?
+activate Database
+Database --> Order: order: Order
+deactivate Database
+activate Order
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService -> EmailService: sendEmail(declineOrderRequest.getRecipient(), String, String, Map<String, String>)
+activate EmailService
+deactivate EmailService
+deactivate DeclineOrderRequest
+
+OrderService -> OrderRepository: save(order: Order)
+deactivate Order
+activate OrderRepository
+
+OrderRepository -> Database: UPDATE INTO orders (order_id, user_id, status, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+activate Database
+
+Database --> Order
+activate Order
+deactivate Database
+
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService --> OrderResponseMapper: map(order: Order)
+activate OrderResponseMapper
+
+OrderResponseMapper --> Response: response: OrderResponse
+deactivate Order
+deactivate OrderResponseMapper
+activate Response
+
+OrderService <-- Response: response: OrderResponse
+OrderService --> OrderController: response: OrderResponse
+OrderController --> viewOrdersDetailsAdmin: response: OrderResponse
+
+deactivate Response
+
+
+deactivate OrderService
+
+deactivate viewOrdersDetailsAdmin
+
+
+
+
+
+end opt
+
+
+end alt
+
+deactivate viewOrdersDetailsAdmin
+
+
+
+
+
+
+else User is Customer
+
+deactivate viewOrdersDetailsAdmin
+
+User -> View: viewSpecificOrder(orderId: String)
+activate View
+
+View -> viewOrdersDetailsCustomers: render()
+
+activate viewOrdersDetailsCustomers
+
+viewOrdersDetailsCustomers -> OrderController: GET /api/v1/corso/customers/orders/{orderId}
+
+
+OrderController -> OrderService: viewSpecificOrder(orderId: String, userId: String)
+
+activate OrderService
+
+OrderService -> OrderRepository: viewSpecificOrder(orderId: String, userId: String)
+
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = orderId AND user_id = userId
+
+activate Database
+
+Database --> allOrders: allOrders: List<Order>
+
+deactivate Database
+
+activate allOrders
+
+allOrders -> OrderRepository: allOrders: List<Order>
+
+OrderRepository --> OrderService: allOrders: List<Order>
+
+deactivate OrderRepository
+
+OrderService -> OrderResponseMapper: allOrders: List<Order>
+
+activate OrderResponseMapper
+
+OrderResponseMapper --> allResponse: allResponse: List<OrderResponse>
+
+activate allResponse
+
+deactivate OrderResponseMapper
+
+deactivate allOrders
+
+allResponse -> OrderService
+
+OrderService --> OrderController: allResponse: List<OrderResponse>
+
+deactivate OrderService
+
+OrderController --> viewOrdersDetailsCustomers: allResponse: List<OrderResponse>
+
+
+deactivate
+
+
+
+
+
+
+opt
+
+User -> viewOrdersDetailsCustomers: cancelOrder()
+
+
+viewOrdersDetailsCustomers -> CancelOrderRequest: DELETE /api/v1/corso/customers/orders/{orderId}
+activate CancelOrderRequest
+
+CancelOrderRequest -> CustomerController
+activate CustomerController
+
+CustomerController -> OrderService: cancelByCustomerOrderByOrderId(orderId: String, cancelOrderRequest: CancelOrderRequest)
+activate OrderService
+
+OrderService -> OrderRepository: findByOrderId_OrderIdAndUserId(orderId: String, userId: String)
+activate OrderRepository
+
+OrderRepository -> Database: SELECT * FROM orders WHERE order_id = ? AND user_id = ?
+activate Database
+Database --> Order: order: Order
+deactivate Database
+activate Order
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService -> Auth0ManagementService: getAllAdmins()
+activate Auth0ManagementService
+
+Auth0ManagementService -> Admins: admins: List<UserInfoReponse>
+activate Admins
+
+OrderService <-- Admins: admins: List<UserInfoReponse>
+deactivate Auth0ManagementService
+
+    OrderService -> EmailService: sendEmail(admin: UserInfoReponse.getEmail, String, String, Map<String, String>)
+    activate EmailService
+    EmailService --> OrderService: int
+deactivate Admins
+deactivate EmailService
+deactivate CancelOrderRequest
+
+OrderService -> OrderRepository: save(order: Order)
+deactivate Order
+activate OrderRepository
+
+OrderRepository -> Database: UPDATE INTO orders (order_id, user_id, status, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+activate Database
+
+
+Database --> Order
+activate Order
+deactivate Database
+
+OrderRepository <-- Order: order: Order
+
+OrderService <-- OrderRepository: order: Order
+deactivate OrderRepository
+
+OrderService --> OrderResponseMapper: map(order: Order)
+activate OrderResponseMapper
+
+OrderResponseMapper --> Response: response: OrderResponse
+deactivate Order
+deactivate OrderResponseMapper
+activate Response
+
+OrderService <-- Response: response: OrderResponse
+
+OrderService --> CustomerController: response: OrderResponse
+
+CustomerController --> viewOrdersDetailsCustomers: response: OrderResponse
+
+deactivate Response
+
+
+end opt
+
+
+
+
+
+end
+
+
+end opt
+
+
+@enduml

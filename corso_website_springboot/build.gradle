@@ -1,0 +1,162 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5'
+    id 'io.spring.dependency-management' version '1.1.3'
+    id 'jacoco'
+    id 'se.solrike.sonarlint' version '1.0.0-beta.15'
+
+}
+
+group = 'com.corso'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+ext {
+    mapstructVersion = "1.5.3.Final"
+    lombokVersion = "1.18.26"
+    lombokMapstructBindingVersion = "0.2.0"
+}
+
+repositories {
+
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.yaml:snakeyaml:2.2'
+    implementation('io.github.cdimascio:dotenv-java:3.0.0')
+
+    implementation('io.github.cdimascio:dotenv-java:3.0.0')
+    implementation('me.paulschwarz:spring-dotenv:4.0.0')
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('com.okta.spring:okta-spring-boot-starter:3.0.5')
+    implementation('com.cloudinary:cloudinary-http44:1.27.0')
+
+    implementation "org.springframework.boot:spring-boot-starter-cache:2.5.0"
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf', version: '3.2.1'
+
+    runtimeOnly('com.h2database:h2')
+
+    implementation group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-gcp-starter-sql-mysql', version: '1.2.8.RELEASE'
+    implementation group: 'com.google.oauth-client', name: 'google-oauth-client-jetty', version: '1.34.1'
+    implementation 'com.okta.spring:okta-spring-boot-starter:3.0.5'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}",
+            "org.projectlombok:lombok:${lombokVersion}",
+            "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+    testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    testImplementation 'com.codeborne:selenide:6.17.0'
+    testImplementation group: 'junit', name: 'junit', version: '4.4'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.6.2'
+    testImplementation('com.h2database:h2')
+    testImplementation 'org.yaml:snakeyaml:2.2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+}
+jacocoTestReport {
+    dependsOn test
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/configuration/**',
+            ])
+        }))
+    }
+}
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+test.finalizedBy jacocoTestReport
+check.dependsOn jacocoTestCoverageVerification
+
+test {
+    exclude("**/DeleteGalleryTest.class")
+    exclude("**/UpdateAnOrderTest.class")
+    exclude("**/PermanentlyDeleteOrderTest.class")
+    exclude("**/DeleteAFAQTest.class")
+    exclude ("**/CreateAFAQTest.class")
+    exclude("**/EditReviewTest.class")
+    exclude("**/GoToEditGalleryTest.class")
+    exclude("**/AddEntryToGalleryTest.class")
+    exclude("**/DeleteSpecificFAQTest.class")
+    exclude("**/ViewAllSpecificFAQTest.class")
+    exclude("**/EditOrderInformationTest.class")
+    exclude("**/ViewAllChooseViewableReviewsTest.class")
+    exclude("**/CancelOrderRequestCustomerTest.class")
+    exclude("**/LeaveReviewTest.class")
+    exclude("**/ViewProfileOrdersTest.class")
+    exclude("**/CustomerViewTheirReviewsTest.class")
+    exclude("**/ViewAllOrdersWithFiltersTest.class")
+    exclude("**/ViewSpecificOrderCustomerTest.class")
+    exclude '**/ViewCarouselTest.class'
+    exclude '**/UpdateCarouselOrderTest.class'
+    exclude '**/LoginAuthTest.class'
+    exclude '**/ViewAllOrdersTest.class'
+    exclude '**/ViewAllOrdersQueryParams.class'
+    exclude '**/ViewCurrentOrdersTest.class'
+    exclude '**/ViewAllCompletedOrdersTest.class'
+    exclude '**/ViewAllOverdueOrdersTest.class'
+    exclude '**/ViewAllServicesTest.class'
+    exclude '**/ModifyProfileTest.class'
+    exclude '**/ViewServiceDetailsTest.class'
+    exclude '**/ViewPendingOrdersTest.class'
+    exclude '**/ViewAllFAQsTest.class'
+    exclude '**/ViewAllPreferredFAQsTest.class'
+    exclude '**/ViewAllReviewsTest.class'
+    exclude '**/ViewAllPreferredReviewsTest.class'
+    exclude '**/ViewAllChoosableReviewsTest.class'
+    exclude '**/ViewAllPinnedReviewsTest.class'
+    exclude '**/CreateExternalOrderTest.class'
+    exclude '**/CreateAServiceTest.class'
+    exclude '**/ViewServiceDetailsAdmin.class'
+    exclude '**/ModifyServiceTest.class'
+    exclude '**/ModifyGalleryTest.class'
+    exclude '**/DeleteReviewTest.class'
+    exclude '**/ChooseViewableFaqsTest.class'
+    exclude '**/ChooseVisibleServicesTest.class'
+    exclude '**/AdminAcceptRequestTest.class'
+    exclude '**/AdminDeclinesRequestTest.class'
+    exclude '**/AdminCancelsOrderTest.class'
+    exclude '**/CustomerViewsASpecificReviewTheyWrote.class'
+    exclude '**/EditFaqInTheAdminPanelTest.class'
+    exclude '**/CustomerRequestsAnOrder.class'
+    exclude '**/LocalizationTest.class'
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+
+

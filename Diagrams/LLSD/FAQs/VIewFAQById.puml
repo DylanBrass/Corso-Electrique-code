@@ -1,0 +1,75 @@
+@startuml
+title View a specific FAQ
+
+actor Admin
+
+participant Dashboard as "<<View>> Dashboard"
+participant CurrentFAQS as "<<View>> ViewAllFaqThroughDashboard"
+participant ViewFaq as "<<View>> ViewFaq"
+participant FAQController as "<<Controller>> FAQController"
+participant FAQService as "<<Service>> FAQService"
+participant FAQResponse as "faqResponse: FAQResponse"
+participant FAQRepository as "<<Repository>> FAQRepository"
+participant FAQ as "faq: FAQ"
+participant Database as "<<Database>> Database"
+participant FAQResponseMapper as "<<Mapper>> FAQResponseMapper"
+
+ref over Dashboard, CurrentFAQS, FAQController, FAQService, FAQResponse, FAQRepository, FAQ, Database, FAQResponseMapper
+
+ViewFaqs
+
+end
+
+
+opt
+
+Admin -> Dashboard: viewASpecificFAQ(String faqId)
+activate Dashboard
+
+Dashboard -> CurrentFAQS: render()
+activate CurrentFAQS
+
+Admin -> CurrentFAQS: viewASpecificFAQ(String faqId)
+
+CurrentFAQS -> ViewFaq: render()
+activate ViewFaq
+
+ViewFaq -> FAQController: GET api/v1/corso/faqs/{faqId} HTTP/1.1
+activate FAQController
+
+FAQController -> FAQService: getFAQByFAQId(String faqId)
+activate FAQService
+
+FAQService -> FAQRepository: getFaqByFaqId_FAQId(String faqId)
+activate FAQRepository
+
+FAQRepository -> Database: SELECT * FROM faqs WHERE faqId = ?
+activate Database
+
+Database --> FAQRepository: FAQ
+deactivate Database
+
+FAQRepository --> FAQ: FAQ
+activate FAQ
+
+FAQ --> FAQService: FAQResponse<FAQ>
+deactivate FAQ
+
+FAQService -> FAQResponseMapper: mapToFAQResponse(FAQ faq)
+activate FAQResponseMapper
+
+FAQResponseMapper --> FAQResponse: FAQResponse
+activate FAQResponse
+deactivate FAQResponseMapper
+
+FAQResponse --> FAQService: FAQResponse
+
+FAQService --> FAQController: FAQResponse
+deactivate FAQService
+
+FAQController --> CurrentFAQS: FAQResponse
+deactivate FAQController
+
+end opt
+
+@enduml

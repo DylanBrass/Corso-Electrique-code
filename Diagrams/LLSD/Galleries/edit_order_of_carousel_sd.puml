@@ -1,0 +1,114 @@
+@startuml
+
+title Edit Order of Carousel
+
+actor Admin
+
+participant Dashboard as "<<view>>\nDashboard"
+
+participant EditOrderOfCarousel as "<<view>>\nEditOrderOfCarousel"
+
+participant OrderRequest as "orderRequests: List<OrderRequest>"
+
+participant OrderController as "<<Controller>>\nOrderController"
+
+participant OrderResponse as "responses: List<OrderResponse>"
+
+participant OrderService as "<<Service>>\nOrderService"
+
+participant Order as "orders: List<Order>"
+
+participant OrderRepository as "<<Repository>>\nOrderRepository"
+
+participant "orderDbs : List<Order>" as orderDb
+
+participant Database as "<<Database>>\nDatabase"
+
+participant OrderResponseMapper as "<<Mapper>>\nOrderResponseMapper"
+
+participant OrderRequestMapper as "<<Mapper>>\nOrderRequestMapper"
+
+ref over Dashboard, EditCarouselOrder, OrderResponseMapper, OrderRequestMapper
+    ViewCarousel
+end ref
+
+opt
+Admin -> Dashboard : EditCarouselOrder()
+
+activate Dashboard
+
+Dashboard -> EditOrderOfCarousel : render()
+
+activate EditOrderOfCarousel
+
+EditOrderOfCarousel -> OrderRequest : PATCH api/v1/corso/galleries/carousel/order
+
+activate OrderRequest
+
+OrderRequest -> OrderController : updateGalleryOrder(List<GalleryOrderUpdateRequest> galleryOrderUpdateRequests)
+
+activate OrderController
+
+OrderController -> OrderService : updateGalleryOrder()
+
+activate OrderService
+
+OrderService -> OrderRequestMapper : mapToGallery(List<GalleryOrderUpdateRequest> galleryOrderUpdateRequests)
+
+activate OrderRequestMapper
+
+OrderRequestMapper -> Order : List<Order>
+
+deactivate OrderRequest
+
+deactivate OrderRequestMapper
+
+activate Order
+
+Order -> OrderService: orders : List<Order>
+
+OrderService -> OrderRepository : saveAll(List<Order> orders)
+
+deactivate Order
+
+activate OrderRepository
+
+    OrderRepository -> Database : UPDATE gallery SET image_position = :imagePosition WHERE gallery_id = :galleryId
+    activate Database
+
+
+Database -> orderDb : orderDbs : List<Order>
+
+deactivate Database
+
+activate orderDb
+
+orderDb --> OrderRepository : orderDbs : List<Order>
+
+OrderRepository -> OrderService : orderDbs : List<Order>
+
+deactivate OrderRepository
+
+OrderService -> OrderResponseMapper : mapToGalleriesResponse(List<Order> orders)
+
+deactivate orderDb
+
+activate OrderResponseMapper
+
+OrderResponseMapper --> OrderResponse : List<OrderResponse>
+
+deactivate OrderResponseMapper
+
+activate OrderResponse
+
+OrderResponse --> OrderService : orderResponses : List<OrderResponse>
+
+OrderService --> OrderController : orderResponses : List<OrderResponse>
+
+OrderController --> OrderRequest : orderResponses : List<OrderResponse>
+
+OrderRequest --> EditOrderOfCarousel : orderResponses : List<OrderResponse>
+
+deactivate OrderResponse
+end opt
+@endpuml

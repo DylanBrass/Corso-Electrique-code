@@ -1,0 +1,81 @@
+@startuml
+
+title View Carousel Use Case Sequence Diagram
+
+actor User 
+
+participant HomePage as "<<View>>\nHomePage"
+
+participant GalleryController as "<<Controller>>\nGalleryController"
+
+participant GalleryService as "<<Service>>\nGalleryService"
+
+participant all as "all: List<Gallery>"
+
+participant GalleryRepository as "<<Repository>>\nGalleryRepository"
+
+participant allResponse as "allResponse: List<GalleryResponse>"
+
+participant Database as "<<Database>>\nDatabase"
+
+participant GalleryResponseMapper as "<<Mapper>>\nGalleryResponseMapper"
+
+User -> HomePage: viewCarousel()
+activate HomePage
+HomePage -> GalleryController: GET /api/v1/corso/galleries/carousel HTTP/1.1
+activate GalleryController
+GalleryController -> GalleryService: getCarousel()
+activate GalleryService
+GalleryService -> GalleryRepository: findAllByCarouselTrue()
+activate GalleryRepository
+
+GalleryRepository -> Database: SELECT * FROM gallery
+
+activate Database
+
+Database --> GalleryRepository: List<Gallery>
+
+deactivate Database
+
+GalleryRepository --> all: List<Gallery>
+destroy GalleryRepository
+
+activate all
+all --> GalleryService: List<Gallery>
+
+
+GalleryService -> GalleryResponseMapper: toGalleriesResponse(all)
+
+destroy all
+
+activate GalleryResponseMapper
+
+GalleryResponseMapper --> allResponse: List<GalleryResponse>
+destroy GalleryResponseMapper
+activate allResponse
+
+allResponse --> GalleryService: allResponses:List<GalleryResponse>
+
+
+GalleryService --> GalleryController: allResponses:List<GalleryResponse>
+
+destroy GalleryService
+
+GalleryController --> HomePage: allResponses:List<GalleryResponse>
+destroy allResponse
+
+
+destroy GalleryController
+
+
+
+
+
+
+
+
+
+
+
+
+@endpuml

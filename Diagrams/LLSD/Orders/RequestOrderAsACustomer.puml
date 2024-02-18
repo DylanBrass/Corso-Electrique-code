@@ -1,0 +1,103 @@
+@startuml
+actor User
+
+participant "Profile Page" as ODashB
+
+participant "CreateOrderPage" as COP
+
+participant "orderRequestCustomer : OrderRequestCustomer" as Orq
+
+participant "CustomerController" as Oc
+
+participant "orderResponse : OrderResponse" as Orr
+
+participant "OrderService" as Os
+
+participant "EmailService" as EmailService
+
+participant "order : Order" as O
+
+participant "OrderRepository" as Orep
+
+participant "orderDb : Order" as Odb
+
+participant "Database" as Db
+
+participant "OrderResponseMapper" as OresM
+
+participant "OrderRequestMapper" as OreqM
+
+
+
+opt
+User -> ODashB : RequestOrder
+activate ODashB
+
+ODashB -> COP : render()
+activate COP
+
+COP -> Orq : POST /api/v1/corso/customers/orders/request
+activate Orq
+
+Orq -> Oc
+activate Oc
+
+Oc -> Os : CustomerRequestOrder(userId, userEmail, orderRequest)
+activate Os
+
+Os -> OreqM : toOrderResponse(orderRequest)
+activate OreqM
+
+OreqM -> O: Order
+
+deactivate Orq
+deactivate OreqM
+
+activate O
+
+O -> Os : order : Order
+
+
+
+Os -> EmailService : sendEmail(String recipient, String subject, String template, Map<String, String> parameters)
+activate EmailService
+EmailService --> Os
+deactivate EmailService
+
+Os -> EmailService : sendEmailToAdmins(String subject, String template, Map<String, String> parameters)
+activate EmailService
+EmailService --> Os
+deactivate EmailService
+
+Os -> Orep: save(order)
+deactivate O
+activate Orep
+
+Orep -> Db: INSERT INTO orders (details) VALUES (:details);
+activate Db
+
+Db -> Odb: orderDb : Order
+deactivate Db
+
+activate Odb
+Odb -> Orep: orderDB : Order
+
+Orep -> Os: orderDB : Order
+deactivate Orep
+Os -> OresM: toOrderResponse(order)
+deactivate Odb
+activate OresM
+
+OresM --> Orr: OrderResponse
+deactivate OresM
+activate Orr
+
+Orr --> Os : orderResponse : OrderResponse
+
+Os --> Oc: orderResponse : OrderResponse
+
+Oc --> COP: orderResponse : OrderResponse
+
+deactivate Orr
+end opt
+@enduml

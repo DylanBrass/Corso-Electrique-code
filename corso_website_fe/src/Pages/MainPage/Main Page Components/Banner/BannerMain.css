@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.banner-box{
+    width: 100%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    min-height: 513px;
+    padding-left: 1rem;
+
+}
+
+.anonymous-banner-title{
+    color: #FFF;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 90px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    text-transform: uppercase;
+}
+
+.anonymous-banner-subtitle{
+    color: rgba(255, 255, 255, 0.70);
+    font-family: Inter, serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: normal;
+}
+
+.banner-box button{
+    border: 2.5px solid #FFF;
+    background: rgba(64, 88, 166, 0.00);
+    color: #FFF;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    padding: 0.4rem;
+
+    &:hover{
+        background-color: #FFF;
+        color: #000;
+    }
+
+    &:active{
+        background-color: #FFF;
+        color: #000;
+        transform: translateY(4px);
+    }
+}
+
+.banner-box h1{
+    color: #FFF;
+    font-family: "Bebas Neue", sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    text-transform: uppercase;
+}
+
+.row-banner{
+    --cui-gutter-x: 0rem;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .anonymous-banner-title {
+        font-size: 50px;
+    }
+}
+

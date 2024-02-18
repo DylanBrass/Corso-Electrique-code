@@ -1,0 +1,143 @@
+@startuml
+
+title View Service Section Use Case Sequence Diagram
+
+actor User
+
+participant HomePage as "<<View>>\nHomePage"
+
+participant ServiceDetailsPage as "<<View>>\nServiceDetailsPage"
+
+participant ServiceController as "<<Controller>>\nServiceController"
+
+participant ServiceService as "<<Service>>\nServiceService"
+
+participant all as "all:List<Service>"
+
+participant Service as "service:Service"
+
+participant ServiceRepository as "<<Repository>>\nServiceRepository"
+
+participant allResponse as "allResponse:List<ServiceResponse>"
+
+participant ServiceResponse as "response:ServiceResponse"
+
+participant Database as "<<Database>>\nDatabase"
+
+participant ServiceResponseMapper as "<<Mapper>>\nServiceResponseMapper"
+
+User -> HomePage:ViewServiceCard()
+activate HomePage
+ 
+HomePage -> ServiceController: GET /api/v1/corso/services/card HTTP/1.1
+activate ServiceController
+
+ServiceController -> ServiceService: getServicesCard()
+
+activate ServiceService
+
+ServiceService -> ServiceRepository: findAll()
+
+activate ServiceRepository
+
+ServiceRepository -> Database: SELECT * FROM service
+
+activate Database
+
+Database --> ServiceRepository: List<Service>
+
+deactivate Database
+
+ServiceRepository --> all : List<Service>
+destroy ServiceRepository
+activate all
+
+all --> ServiceService: all:List<Service>
+
+ServiceService -> ServiceResponseMapper: mapToResponse(all)
+destroy all
+activate ServiceResponseMapper
+ServiceResponseMapper --> allResponse: List<ServiceResponse>
+activate allResponse
+destroy ServiceResponseMapper
+allResponse --> ServiceService: allResponse:List<ServiceResponse>
+ServiceService --> ServiceController: allResponse:List<ServiceResponse>
+destroy ServiceService
+
+ServiceController --> HomePage: allResponse:List<ServiceResponse>
+
+destroy allResponse
+destroy ServiceController
+
+User -> HomePage:ViewServiceDetails()
+
+HomePage -> ServiceDetailsPage: render()
+
+activate ServiceDetailsPage
+
+ServiceDetailsPage -> ServiceController: GET /api/v1/corso/services/{id} HTTP/1.1
+
+activate ServiceController
+
+ServiceController -> ServiceService: getServiceById(id)
+
+activate ServiceService
+
+ServiceService -> ServiceRepository: findById(id)
+
+activate ServiceRepository
+
+ServiceRepository -> Database: SELECT * FROM service WHERE id = ?
+
+activate Database
+
+Database --> ServiceRepository: Service
+
+deactivate Database
+
+ServiceRepository --> Service: Service
+destroy ServiceRepository
+
+activate Service
+
+Service --> ServiceService: service:Service
+
+
+
+
+
+
+ServiceService -> ServiceResponseMapper: mapToResponse(Service)
+
+
+destroy Service
+activate ServiceResponseMapper
+
+ServiceResponseMapper --> ServiceResponse: ServiceResponse
+
+activate ServiceResponse
+
+destroy ServiceResponseMapper
+
+ServiceResponse --> ServiceService: response:ServiceResponse
+
+ServiceService --> ServiceController: response:ServiceResponse
+
+destroy ServiceService
+
+ServiceController --> ServiceDetailsPage: response:ServiceResponse
+destroy ServiceResponse
+destroy ServiceController
+
+
+User -> ServiceDetailsPage:Back()
+
+ServiceDetailsPage -> HomePage: render()
+
+destroy ServiceDetailsPage
+
+
+
+
+
+@endpuml

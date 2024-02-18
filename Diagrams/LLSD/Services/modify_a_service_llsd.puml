@@ -1,0 +1,144 @@
+@startuml
+actor User
+
+participant "<<View>>\nDashboard" as DashB
+
+participant "<<View>>\nModifyServicePage" as ModServP
+
+participant "serviceRequest : ServiceRequest" as Sq
+
+participant "<<Controller>>\nServiceController" as Sc
+
+participant "serviceResponse : ServiceResponse" as Sr
+
+participant "<<Service>>\nCloudinaryService" as Cs
+
+participant "<<Service>>\nServiceService" as Ss
+
+
+participant "service : Service" as S
+
+
+participant "<<Repository>>\nServiceRepository" as Srep
+
+participant "serviceDb : Service" as Sdb
+
+participant "Database" as Db
+
+participant "ServiceResponseMapper" as SresM
+
+participant "ServiceRequestMapper" as SreqM
+
+ref over User, DashB, ModServP, Sq, Sc, Sr, Ss, S, Srep, Sdb, Db, SresM, SreqM
+    ViewServiceById
+end ref
+
+opt
+
+User -> DashB : ModifyService()
+activate DashB
+
+DashB -> ModServP : Render()
+activate ModServP
+
+ModServP -> Sq : PUT api/v1/corso/services/{serviceId}
+activate Sq
+
+Sq -> Sc
+
+activate Sc
+
+Sc -> Ss : modifyService(serviceId, serviceRequest)
+activate Ss
+
+Ss -> Srep: findByServiceIdentifier_Service_Id(serviceId)
+
+activate Srep
+
+Srep -> Db: SELECT * FROM service WHERE service_id = :serviceId
+
+activate Db
+
+Db -> Sdb: serviceDb : Service
+
+deactivate Db
+
+activate Sdb
+
+Sdb -> Srep: serviceDb : Service
+
+Srep -> Ss: serviceDb : Service
+
+deactivate Srep
+
+
+alt serviceRequest.getServiceIcom() != null
+
+       Ss -> Cs : extractPublicIdFromCloudinaryUrl(serviceDb.getServiceIcon())
+       activate Cs
+
+deactivate Cs
+    alt serviceRequest.getServiceIcon().contains("http://") && serviceRequest.getServiceIcon().contains("https://")
+        Ss -> Cs : updateCloudinaryImage(serviceRequest.getServiceIcon())
+        activate Cs
+
+        deactivate Cs
+
+    end
+
+end
+
+alt serviceRequest.getServiceImage() != null
+
+         Ss -> Cs : extractPublicIdFromCloudinaryUrl(serviceDb.getServiceImage())
+         activate Cs
+
+    alt serviceRequest.getServiceImage().contains("http://") && serviceRequest.getServiceImage().contains("https://")
+        Ss -> Cs : updateCloudinaryImage(serviceRequest.getServiceImage())
+        activate Cs
+
+        deactivate Cs
+
+    end
+
+end
+
+
+Ss -> Srep: save(serviceDb)
+
+activate Srep
+
+Srep -> Db: INSERT INTO service (service_id, service_name, service_description, service_icon, service_image, service_price, service_duration, service_status, service_category, service_subcategory, service_created_at, service_updated_at) VALUES (:serviceId, :serviceName, :serviceDescription, :serviceIcon, :serviceImage, :servicePrice, :serviceDuration, :serviceStatus, :serviceCategory, :serviceSubcategory, :serviceCreatedAt, :serviceUpdatedAt)
+deactivate Sdb
+activate Db
+
+Db --> Sdb: serviceDb : Service
+
+activate Sdb
+
+Sdb -> SresM: toServiceResponse(serviceDb)
+
+activate SresM
+
+SresM --> Sr: serviceResponse : ServiceResponse
+
+deactivate SresM
+activate Sr
+
+Sr --> Ss: serviceResponse : ServiceResponse
+
+deactivate Sr
+
+Ss --> Sc: serviceResponse : ServiceResponse
+
+deactivate Ss
+
+Sc --> ModServP: serviceResponse : ServiceResponse
+
+
+
+
+
+end opt
+
+@enduml

@@ -1,0 +1,83 @@
+@startuml
+title View All Gallery
+
+actor Admin
+
+participant Dashboard as "<<View>> Dashboard"
+
+participant EditGalleryPage as "<<View>> ViewSpecificGallery"
+
+participant GalleryController as "<<Controller>> GalleryController"
+
+participant GalleryService as "<<Service>> GalleryService"
+
+participant GalleryResponse as "GalleryResponse"
+
+participant GalleryRepository as "<<Repository>> GalleryRepository"
+
+participant Gallery as "Gallery"
+
+participant Database as "<<Database>> Database"
+
+participant GalleryResponseMapper as "<<Mapper>> GalleryResponseMapper"
+
+ref over Dashboard, EditGalleryPage, GalleryController, GalleryService, GalleryResponse, GalleryRepository, Gallery, Database, GalleryResponseMapper
+
+    ViewCarousel
+
+end
+
+opt
+Admin -> Dashboard: viewSpecificGallery()
+activate Dashboard
+Dashboard -> EditGalleryPage: render()
+activate EditGalleryPage
+
+EditGalleryPage -> GalleryController: GET api/v1/corso/galleries/{galleryId} HTTP/1.1
+activate GalleryController
+GalleryController -> GalleryService: getGalleryById(String galleryId)
+
+activate GalleryService
+
+GalleryService -> GalleryRepository: getGalleryByGalleryId_GalleryId(String galleryId)
+
+activate GalleryRepository
+
+GalleryRepository -> Database: SELECT gallery FROM galleries WHERE gallery_id = ?
+
+activate Database
+
+Database --> GalleryRepository: Gallery
+
+deactivate Database
+
+GalleryRepository --> Gallery: Gallery
+activate Gallery
+Gallery --> GalleryService: gallery: Gallery
+
+deactivate GalleryRepository
+
+GalleryService -> GalleryResponseMapper: mapToGalleryResponse(Gallery gallery)
+
+activate GalleryResponseMapper
+
+GalleryResponseMapper --> GalleryResponse: gallery: Gallery
+
+activate GalleryResponse
+
+deactivate GalleryResponseMapper
+
+GalleryResponse --> GalleryService: gallery: Gallery
+
+GalleryService --> GalleryController: gallery: Gallery
+
+deactivate GalleryService
+
+GalleryController --> EditGalleryPage: gallery: Gallery
+
+deactivate GalleryResponse
+deactivate GalleryController
+
+
+end opt
+@enduml

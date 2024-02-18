@@ -1,0 +1,26 @@
+services:
+#  corso-frontend:
+#    build:
+#      context: ../corso_website_fe
+#    hostname: corso-fe
+#    container_name: docker-react-i
+#    ports:
+#      - "3000:80"
+#    depends_on: [corso-backend]
+  corso-backend:
+    build: .
+    hostname: corso-be
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp-credentials
+    secrets:
+      - gcp-credentials
+
+
+
+secrets:
+  gcp-credentials:
+    file: src/main/resources/gcp-credentials.json

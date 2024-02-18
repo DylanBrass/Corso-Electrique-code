@@ -1,0 +1,156 @@
+# Default Spring Profile
+server:
+  error:
+    include-message: always
+frontend:
+  url: http://localhost:3000/
+
+backend:
+  url: http://localhost:8080/
+
+website:
+  domain: localhost
+
+logging:
+  level:
+    root: INFO
+    com.dylan: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+---
+# for test
+
+# for h2
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  h2:
+    console:
+      enabled: true
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=100;DB_CLOSE_ON_EXIT=false;DATABASE_TO_UPPER=false;MODE=MySQL;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+        auto-quote-keyword: true
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    defer-datasource-initialization: true
+  sql:
+    init:
+      platform: h2
+      mode: always
+
+frontend:
+  url: http://localhost:3000/
+
+backend:
+  url: http://localhost:8080/
+
+
+logging:
+  level:
+    org.springframework.data.jpa: DEBUG
+    org.hibernate.SQL: DEBUG
+
+
+---
+# for docker
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  web:
+    resources:
+      add-mappings: false
+  datasource:
+    url: dev database here (We used MySQL)
+    username: db user name
+    password: db user password
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      platform: mysql
+      mode: always
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+
+server:
+  error:
+    whitelabel:
+      enabled: false
+    include-binding-errors: always
+    include-message: always
+  port: 8080
+
+frontend:
+  url: http://localhost:3000/
+
+backend:
+  url: http://localhost:8080/
+
+
+spring.datasource.hikari.initializationFailTimeout: 60000
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  web:
+    resources:
+      add-mappings: false
+  datasource:
+    url: Prod database here (We used MySQL)
+    username: db user name
+    password: db user password
+
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      platform: mysql
+      mode: always
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+server:
+  error:
+    whitelabel:
+      enabled: false
+    include-binding-errors: always
+    include-message: always
+  port: 8080
+
+frontend:
+  url: hosted frontend url (production)
+
+backend:
+  url: hosted backend url (production)
+
+logging:
+  level:
+    root: INFO
+    com.corso: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+
+spring.datasource.hikari.initializationFailTimeout: 60000

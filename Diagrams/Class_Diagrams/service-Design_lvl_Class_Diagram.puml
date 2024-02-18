@@ -1,0 +1,223 @@
+@startuml
+package "ServiceSubdomain"{
+
+    package "PresentationLayer"{
+
+        class "<<controller>>\nServicesController" as controller {
+            - serviceService : ServiceService
+            ---
+            + ServiceController(serviceService : ServiceService)
+            + getServiceById(serviceId : String) : ResponseEntity<ServiceResponse>
+            + getAllServices() : ResponseEntity<List<ServiceResponse>>
+            + getAllVisibleServices() : ResponseEntity<List<ServiceResponse>>
+            + createService(serviceRequest : ServiceRequest) : ResponseEntity<ServiceResponse>
+            + countAllServices() : ResponseEntity<Integer>
+            + modifyService(serviceId : String, serviceRequest : ServiceRequest) : ResponseEntity<ServiceResponse>
+            + changeServiceVisibility(serviceId : String) : ResponseEntity<ServiceResponse>
+            + getServiceTimeByService(date_start: String, date_end: String) : ResponseEntity<List<ServiceTimeByResponse>>
+            + getTotalOrderRequestByService(date_start: String, date_end: String) : ResponseEntity<String>
+            + getTotalOrdersPerService(date_start: String, date_end: String) : ResponseEntity<List<DatabaseDTOTotalOrdersPerService>>
+        }
+
+
+        class "DatabaseDTOTotalOrdersPerService" as ordersPerServiceResponse{
+            - serviceId : String
+            - serviceName: String
+            - totalOrderRequest : Long
+            ---
+            + DatabaseDTOTotalOrdersPerService(tuple: Object[])
+        }
+
+        class "DatabaseDTOOrdersPerService" as databaseDTOOrdersPerService{
+            - serviceId : String
+            - serviceName: String
+            - totalOrderRequest : Long
+            - date : LocalDate
+            ---
+            + DatabaseDTOOrdersPerService(tuple: Object[])
+        }
+
+
+
+
+
+        class "ServiceTimeByResponse" as timeByServiceResponse{
+            - serviceId : String
+            - serviceName: String
+            - hours_worked : Long
+            ---
+            + ServiceTimeByResponse(tuple: Object[])
+        }
+
+        class "ServiceResponse" as serviceResponse{
+                - serviceId : String
+                - serviceName: String
+                - serviceDescription : String
+                - serviceIcon : String
+                - serviceImage : String
+                - isActive : boolean
+               ---
+        }
+
+        class "ServiceRequest" as serviceRequest{
+               - serviceName: String
+               - serviceDescription : String
+               - serviceIcon : String
+               - serviceImage : String
+               - isActive : boolean
+               ---
+        }
+
+
+
+
+    }
+
+    package "BusinessLayer"{
+        interface "ServiceService" as service {
+            ---
+            + getServiceByServiceId(serviceId : String) : ServiceResponse
+            + getAllServices() : List<ServiceResponse>
+            + getAllVisibleServices() : List<ServiceResponse>
+            + createService(serviceRequest : ServiceRequest) : ServiceResponse
+            + modifyService(serviceId : String, serviceRequest : ServiceRequest) : ServiceResponse
+            + changeServiceVisibility(serviceId : String) : ServiceResponse
+            + countAllServices() : int
+            + getServiceTimeByService(date_start: String, date_end: String) : List<TimeByServiceResponse>
+            + getTotalOrderRequestByService(date_start: String, date_end: String) : String
+            + getTotalOrdersPerService(date_start: String, date_end: String) : List<DatabaseDTOTotalOrdersPerService>
+
+        }
+
+
+        class "<<service>>\nServiceServiceImpl" as serviceImpl{
+            - serviceRepository : ServiceRepository
+            - serviceRequestMapper : ServiceRequestMapper
+            - serviceResponseMapper : ServiceResponseMapper
+            - cloudinaryService : CloudinaryService
+            ---
+             + getServiceByServiceId(serviceId : String) : ServiceResponse
+             + getAllServices() : List<ServiceResponse>
+             + getAllVisibleServices() : List<ServiceResponse>
+             + createService(serviceRequest : ServiceRequest) : ServiceResponse
+             + modifyService(serviceId : String, serviceRequest : ServiceRequest) : ServiceResponse
+             + changeServiceVisibility(serviceId : String) : ServiceResponse
+             + countAllServices() : int
+                + getServiceTimeByService(date_start: String, date_end: String) : List<TimeByServiceResponse>
+                + getTotalOrderRequestByService(date_start: String, date_end: String) : String
+                + getTotalOrdersPerService(date_start: String, date_end: String) : List<DatabaseDTOTotalOrdersPerService>
+        }
+
+        serviceImpl --> timeByServiceResponse
+
+        class serviceImpl extends service
+    }
+
+    package "DataLayer"{
+        interface "<<repository>>\nServiceRepository" as repository{
+            ---
+            + findByServiceIdentifier_ServiceId(serviceId : String) : Service
+            + findAllByIsActive(isActive : boolean) : List<Service>
+            + countAllBy() : int
+            + getHoursWorkedByServiceFromOrdersInRange(date_start: String, date_end: String) : List<Object[]>
+            + getTotalOrderRequestByService(date_start: String, date_end: String) : List<Object[]>
+            + getTotalOrdersPerService(date_start: String, date_end: String) : List<Object[]>
+
+        }
+
+        class ServiceIdentifier {
+            - serviceId : String
+            ---
+            + ServiceIdentifier(serviceId : String)
+            + ServiceIdentifier()
+            + getServiceId() : String
+
+        }
+
+        class "ServiceEntity" as service{
+            - id : int
+            - serviceId : ServiceIdentifier
+            - serviceName: String
+            - serviceDescription : String
+            - serviceIcon : String
+            - serviceImage : String
+            - isActive : boolean
+            ---
+            + ServiceEntity()
+            + ServiceEntity(serviceName: String, serviceDescription: String, serviceIcon: String, serviceImage: Sting, isActive: boolean)
+
+        }
+
+        interface repository extends JpaRepository
+
+
+        serviceImpl --> service
+
+        serviceImpl --> ordersPerServiceResponse
+
+        repository --> service
+
+        service --> ServiceIdentifier
+
+    }
+
+    package "MapperLayer"{
+
+
+    interface "<<Mapper>>\nServiceRequestMapper" as requestMapper{
+        ---
+        + toService(serviceRequest : ServiceRequest) : ServiceEntity
+    }
+
+    interface "<<Mapper>>\nServiceResponseMapper" as responseMapper{
+        ---
+        + toServiceResponse(service : Service) : ServiceResponse
+        + toServiceResponses(services : List<Services>) : List<ServiceResponse>
+    }
+
+
+
+    }
+
+
+
+
+    requestMapper --> serviceRequest
+
+    responseMapper --> serviceResponse
+
+
+
+
+    serviceImpl --> responseMapper
+    serviceImpl --> requestMapper
+
+
+    controller --> serviceResponse
+    controller --> serviceRequest
+
+
+
+    controller --> serviceImpl
+
+    serviceImpl --> repository
+
+    serviceImpl -> databaseDTOOrdersPerService
+
+}
+
+package "cloudinary"{
+
+    class CloudinaryService {
+        - cloudinary : Cloudinary
+        ---
+        + CloudinaryService()
+        + uploadBase64Image(base64Image : String) : String throws IOException
+        + extractPublicIdFromCloudinaryUrl(cloudinaryUrl : String) : String
+        + updateCloudinaryImage(publicId: String, base64Image : String) : String throws IOException
+    }
+
+}
+
+serviceImpl --> CloudinaryService
+@endpuml

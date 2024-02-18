@@ -1,0 +1,121 @@
+@startuml
+actor Admin
+
+participant "<<View>>\nDashboard" as DashB
+
+participant "<<View>>\nEditGallery" as ModifyAGallery
+
+participant "<<View>>\nViewSpecificGalleryPhoto" as ViewSpecificGalleryPhoto
+
+participant "galleryRequest : GalleryRequest" as GalleryRequest
+
+participant "<<Controller>>\nGalleryController" as GalleryController
+
+participant "galleryResponse : GalleryResponse" as GalleryResponse
+
+participant "<<Service>>\nCloudinaryService" as CloudinaryService
+
+participant "<<Service>>\nGalleryService" as GalleryService
+
+participant "gallery : Gallery" as Gallery
+
+participant "<<Repository>>\nGalleryRepository" as GalleryRepository
+
+participant "galleryDb : Gallery" as GalleryDb
+
+participant "Database" as Db
+
+participant "GalleryResponseMapper" as GalleryResponseMapper
+
+participant "GalleryRequestMapper" as GalleryRequestMapper
+
+ref over Admin, DashB, ModifyAGallery, ViewSpecificGalleryPhoto, GalleryRequest, GalleryController, GalleryResponse, CloudinaryService, GalleryService, Gallery, GalleryRepository, GalleryDb, Db, GalleryResponseMapper, GalleryRequestMapper
+    ViewGalleryById
+end ref
+
+opt
+Admin -> DashB : ViewGalleryById()
+activate DashB
+
+DashB -> ModifyAGallery : Render()
+activate ModifyAGallery
+
+ModifyAGallery -> ViewSpecificGalleryPhoto
+activate ViewSpecificGalleryPhoto
+
+ViewSpecificGalleryPhoto -> GalleryRequest : PUT api/v1/corso/galleries/carousel/{galleryId}
+activate GalleryRequest
+
+GalleryRequest -> GalleryController
+activate GalleryController
+
+GalleryController -> GalleryService: modifyGallery(galleryId, galleryRequest)
+activate GalleryService
+
+GalleryService -> GalleryRepository: findByGalleryId_GalleryId(galleryId)
+activate GalleryRepository
+
+GalleryRepository -> Database: SELECT * FROM galleries WHERE gallery_id = galleryId
+activate Database
+
+Database -> GalleryDb : galleryDb : Gallery
+
+deactivate Database
+
+activate GalleryDb
+
+GalleryDb -> GalleryRepository : galleryDb : Gallery
+
+GalleryRepository -> GalleryService : galleryDb : Gallery
+
+deactivate GalleryRepository
+
+alt galleryRequest.getPhoto() != null
+
+         GalleryRepository -> CloudinaryService : extractPublicIdFromCloudinaryUrl(galleryDb.getPhoto())
+         activate CloudinaryService
+
+    alt galleryRequest.getPhoto().contains("http://") && galleryRequest.getPhoto().contains("https://")
+        GalleryService -> CloudinaryService : updateCloudinaryImage(galleryRequest.getPhoto())
+        activate CloudinaryService
+
+        deactivate CloudinaryService
+
+    end
+
+end
+
+GalleryService -> GalleryRepository : save(galleryDb)
+
+activate GalleryRepository
+GalleryRepository -> Database : UPDATE galleries SET description=description, photo = galleryDb.getPhoto() WHERE gallery_id = galleryId
+deactivate GalleryDb
+activate Database
+
+Database --> GalleryDb : galleryDb : Gallery
+
+activate GalleryDb
+
+GalleryDb -> GalleryResponseMapper : toGalleryResponse(galleryDb)
+
+activate GalleryResponseMapper
+
+GalleryResponseMapper --> GalleryResponse : galleryResponse : GalleryResponse
+
+deactivate GalleryResponseMapper
+
+activate GalleryResponse
+
+GalleryResponse --> GalleryService : galleryResponse : GalleryResponse
+
+deactivate GalleryResponse
+
+GalleryService --> GalleryController : galleryResponse : GalleryResponse
+
+deactivate GalleryService
+
+GalleryController --> ViewSpecificGalleryPhoto : galleryResponse : GalleryResponse
+
+end opt
+
+@enduml
