@@ -7,7 +7,6 @@ import {useParams} from "react-router-dom";
 import {usePlacesWidget} from "react-google-autocomplete";
 import NavigationBar from "../../../Components/NavBar/NavigationBar";
 import swal from "sweetalert";
-import {useNavigate} from "react-router";
 import '../../globalStyling/globalStyling.css';
 import './UpdateOrder.css'
 import {SyncLoader} from "react-spinners";
@@ -19,13 +18,12 @@ function UpdateOrder() {
     const auth = useAuth();
     const {t} = useTranslation();
 
-    const navigate = useNavigate()
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
 
     const {ref} = usePlacesWidget({
-        apiKey: process.env.REACT_APP_GOOGLE_API_KEY,
+        apiKey: process.env.REACT_APP_MAPS_API_KEY,
         onPlaceSelected: (place) => {
             try {
                 document.getElementById("customerAddress")!.setAttribute("value", place.formatted_address)
@@ -128,7 +126,7 @@ function UpdateOrder() {
 
                     swal(t("alerts.order.orderUpdatedTitle"), t("alerts.order.orderUpdatedMessage"), "success")
                         .then(() => {
-                            navigate(-1)
+                            window.location.replace(document.referrer);
                         })
                 }
 

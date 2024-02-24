@@ -136,7 +136,7 @@ function RequestOrder() {
     }, []);
 
     const {ref} = usePlacesWidget({
-        apiKey: "google_maps_api_key",
+        apiKey: process.env.REACT_APP_MAPS_API_KEY,
         onPlaceSelected: (place) => {
             try {
                 document.getElementById("customerCity")!.setAttribute("value", place.address_components[2].long_name)
